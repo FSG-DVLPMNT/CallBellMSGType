@@ -1,31 +1,25 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import Optional
+from fastapi import FastAPI, Request
 
 app = FastAPI()
 
-class Message(BaseModel):
-    type: str
-    text: Optional[str] = None
-
-class WebhookPayload(BaseModel):
-    message: Optional[Message] = None
-
 @app.post("/callbell/webhook")
-async def callbell_webhook(payload: WebhookPayload):
+async def callbell_webhook(request: Request):
     try:
-        if not payload.message:
+        payload = await request.json()
+        message = payload.get("message")
+
+        if not message:
             return {"result": "UNKNOWN"}
 
-        result = "OTHER"
+        msg_type = message.get("type")
 
-        if payload.message.type == "text":
-            result = "TEXT"
+        if msg_type == "text":
+            return {"result": "TEXT"}
 
-        if payload.message.type == "audio":
-            result = "VOICE"
+        if msg_type == "audio":
+            return {"result": "VOICE"}
 
-        return {"result": result}
+        return {"result": "OTHER"}
 
     except Exception:
         return {"result": "ERROR"}
